@@ -1,0 +1,51 @@
+---
+- name: install elasticsearch
+  yum:
+    name: elasticsearch
+    state: present
+
+#Copy the config template
+- name: Copy Configuration File
+  template: src=elasticsearch.yml.j2 dest={{conf_dir}}/elasticsearch.yml owner={{ es_user }} group={{ es_group }} mode=0644 force=yes
+  notify: restart elasticsearch
+
+#Copy the logging.yml
+
+- name: Copy jvm.options File for Instance
+  template: src=jvm.options.j2 dest={{conf_dir}}/jvm.options owner={{ es_user }} group={{ es_group }} mode=0644 force=yes
+  notify: restart elasticsearch
+
+- block:
+  - name: configure memory_lock in /etc/sysconfig/elasticsearch
+    lineinfile: dest=/etc/sysconfig/elasticsearch regexp='^#MAX_LOCKED_MEMORY' line='MAX_LOCKED_MEMORY=unlimited'
+    notify: restart elasticsearch
+
+  - name: configure max open files in /etc/sysconfig/elasticsearch
+    lineinfile: dest=/etc/sysconfig/elasticsearch regexp='^#MAX_OPEN_FILES' line='MAX_OPEN_FILES=65536'
+    notify: restart elasticsearch
+
+  - name: configure memory_lock in /usr/lib/systemd/system/elasticsearch
+    lineinfile: dest=/usr/lib/systemd/system/elasticsearch.service regexp='^#LimitMEMLOCK' line='LimitMEMLOCK=infinity'
+    notify: restart elasticsearch
+
+  - name: reload daemon
+    shell: systemctl daemon-reload 
+    notify: restart elasticsearch
+  when: bootstrap_memory_lock == true
+  tags: memory_lock
+
+- name: create elasticsearch directory
+  file:
+    path: /opt/elasticsearch
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0755
+    state: directory
+
+
+- name: start elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+    enabled: yes
+

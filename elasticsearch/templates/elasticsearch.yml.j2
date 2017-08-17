@@ -1,0 +1,60 @@
+
+{% if es_cluster_name is defined %}
+cluster.name: {{es_cluster_name}}
+
+{% if es_replicas is defined %}
+index.number_of_replicas: {{es_replicas}}
+{% endif %}
+
+{% if es_shards is defined %}
+index.number_of_shards: {{es_shards}}
+{% endif %}
+
+{% endif %}
+
+{% if es_data_node is defined %}
+node.data: {{es_data_node|lower}}
+{% endif %}
+
+{% if es_master_node is defined %}
+node.master: {{es_master_node|lower}}
+{% endif %}
+
+node.name: {{ansible_hostname}}
+
+{% if bootstrap_memory_lock is defined and bootstrap_memory_lock %}
+bootstrap.memory_lock: true
+{% endif %}
+
+{% if action_auto_create_index is defined %}
+action.auto_create_index: {{ action_auto_create_index }}
+{% endif %}
+
+{% if es_cluster_setup is defined and es_cluster_setup %}
+discovery.zen.minimum_master_nodes: {{ ( groups[es_config_unicast_group]|count /2 ) | round (0, 'ceil') | int}}
+{% endif %}
+
+
+{% if es_memory_tuning is defined %}
+{%   for item in es_memory_tuning %}
+{%     if item.set %}
+
+{{ item.name }}: {{ item.value }}
+{% endif %}
+{%   endfor %}
+{% endif %}
+
+{% if es_allow_remote_connections is defined and es_allow_remote_connections %}
+network.host: 0.0.0.0
+{% else %}
+network.host: {{ inventory_hostname }}
+{% endif %}
+
+http.port: 9200
+
+{% if es_config_unicast is defined and es_config_unicast %}
+discovery.zen.ping.unicast.hosts: [{% for host in groups['es_config_unicast_group'] %}"{{host}}"{% if not loop.last %}, {%endif %}{% endfor %}]
+{% endif %}
+
+path.logs: /opt/elasticsearch/logs
+path.data: /opt/elasticsearch/data

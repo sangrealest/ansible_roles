@@ -1,0 +1,36 @@
+---
+conf_dir: /etc/elasticsearch
+es_user: elasticsearch
+es_group: elasticsearch
+
+# defaults file for elasticsearch
+es_cluster_name: elk
+#for elk 5.0 you shouldn't define index in elasticsearch.yml
+#define replication and shard
+es_replicas: 1
+es_shards: 5
+es_heap_size: 4g
+es_data_node: true
+es_master_node: false
+es_cluster_setup: false
+es_config_unicast_group: 'elk_elasticsearch_logstash'
+action_auto_create_index: '.security, .monitoring*, .watches, messages*, *.*'
+es_memory_tuning:
+  - name: indices.breaker.fielddata.limit
+    set: false
+    value: 60%
+  - name: indices.breaker.request.limit
+    set: false
+    value: 40%
+  - name: indices.breaker.total.limit
+    set: false
+    value: 40%
+  - name: indices.fielddata.cache.size
+    set: false
+    value: 40%
+es_allow_remote_connections: true
+es_config_unicast: true
+bootstrap_memory_lock: true
+zk_url: '11.11.106.183:2181,11.11.106.184:2181,11.11.106.185:2181'
+# JVM custom parameters
+es_jvm_custom_parameters: ''
