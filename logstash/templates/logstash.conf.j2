@@ -1,0 +1,19 @@
+input {
+    kafka {
+        bootstrap_servers => "{{kfk_url}}"
+        topics => ["message-logs"]
+        consumer_threads => 3
+        auto_offset_reset => "earliest"
+        enable_auto_commit => "false"
+        codec => "json"
+
+    }
+}
+
+output {
+        elasticsearch {
+            hosts => ["{{ elasticsearch_url }}"]
+            index => "logs-%{+YYYY.MM.dd}"
+        }
+
+}

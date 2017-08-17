@@ -1,0 +1,7 @@
+---
+# defaults file for logstash
+#logstash_for_which_cluster: base
+#logstash_elasticsearch_hosts_zk: 'elk_zookeeper'
+logstash_inscure: true
+kfk_url: '"11.11.106.180:9092,11.11.106.181:9092,11.11.106.182:9092"'
+elasticsearch_url: '"http://11.11.106.177:9200","http://11.11.106.178:9200","http://11.11.106.179:9200"'

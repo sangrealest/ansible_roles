@@ -1,0 +1,4 @@
+---
+# defaults file for kibana
+esch.url: 'http://11.11.106.177:9200'
+

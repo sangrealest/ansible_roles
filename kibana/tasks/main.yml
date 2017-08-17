@@ -1,0 +1,30 @@
+---
+- name: install kibana
+  yum:
+    name: kibana
+    state: present
+
+- name: configure kibana
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart kibana
+
+#- name: create kibana directory
+#  file:
+#    path: /opt/kibana
+#    owner: kibana
+#    group: kibana
+#    mode: 0755
+#    state: directory
+
+
+- name: start kibana
+  service:
+    name: kibana
+    state: started
+    enabled: yes
+

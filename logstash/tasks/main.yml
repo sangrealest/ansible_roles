@@ -1,0 +1,43 @@
+---
+- name: install logstash
+  yum:
+    name: logstash
+    state: present
+
+- name: configure elasticsearch
+  template:
+    src: logstash.yml.j2
+    dest: /etc/logstash/logstash.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart logstash
+
+- name: init logstash  script 
+  shell: /usr/share/logstash/bin/system-install
+
+- name: create logstash configuration files
+  template:
+    src: "{{item}}.j2"
+    dest: "/etc/logstash/conf.d/{{item}}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items: 
+  - logstash.conf
+  notify: restart logstash
+
+- name: create logstash directory
+  file:
+    path: /opt/logstash
+    owner: logstash
+    group: logstash
+    mode: 0755
+    state: directory
+
+
+- name: ensure logstash is started and enabled on boot
+  service:
+    name: logstash
+    state: started
+    enabled: yes
