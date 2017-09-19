@@ -1,0 +1,58 @@
+---
+- name: create zookeeper user
+  user:
+    name: zookeeper
+    uid: 704
+    state: present
+    password: redhat
+
+- name: extract zookeeper file
+  unarchive:
+    src: "zookeeper-{{zookeeper_version}}.tar.gz"
+    dest: /opt/
+    owner: zookeeper
+    group: zookeeper
+
+- name: link to /opt/zookeeper
+  file:
+    src: /opt/zookeeper-{{zookeeper_version}}
+    dest: /opt/zookeeper
+    state: link
+    owner: zookeeper
+    group: zookeeper
+
+- name: create /opt/zookeeper/data directory
+  file:
+    path: "{{item}}"
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+  with_items:
+    - /opt/zookeeper/data
+    - /opt/zookeeper/logs
+
+- name: copy zookeeperd init script to target
+  copy:
+    src: zookeeperd
+    dest: /etc/init.d/zookeeperd
+    mode: 0755
+
+- name: setup zoo.cfg
+  template: src=zoo.cfg.j2 dest=/opt/zookeeper/conf/zoo.cfg owner=zookeeper group=zookeeper
+  notify:
+    - restart zookeeper
+
+- name: setup myid
+  template: src=myid.j2 dest=/opt/zookeeper/data/myid owner=zookeeper group=zookeeper
+  notify:
+    - restart zookeeper
+
+- name: start zookeeper
+  shell: /opt/zookeeper/bin/zkServer.sh  start
+
+#- name: enable zookeeper service
+#  service:
+#    name: zookeeperd
+#    enabled: yes
+#    state: started
+#    pattern: org.apache.zookeeper.server.quorum.QuorumPeerMain

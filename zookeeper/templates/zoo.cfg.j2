@@ -1,0 +1,12 @@
+#the number of milliseconds of each tick
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir={{zookeeper_data_dir}}
+dataLogDir={{zookeeper_data_log_dir}}
+clientPort={{zookeeper_client_port}}
+{% set x = 1 %}
+{% for server in groups[elk_zk] %}
+server.{{x}}={{server}}:4000:5000
+{% set x = x + 1 %}
+{% endfor %}

@@ -1,0 +1,95 @@
+filebeat:
+  prospectors:
+
+#    -
+#      paths:
+#        - /home/tomcat/applogs/ibm-mdse-service/app/*.log
+#      document_type: mdse
+#      input_type: log
+#      fields:
+#        log_type: biz
+#      fields_under_root: true
+#      max_bytes: 102400
+#      max_lines: 500
+#      force_close_files: true
+#      multiline:
+#        pattern:^20
+#        negate: true
+#        match: after
+#
+#    -
+#      paths:
+#        - /home/tomcat/applogs/ibm-mdse-service/sys/*.log
+#      document_type: mdse
+#      input_type: log
+#      fields:
+#        log_type: sys
+#      fields_under_root: true
+#      max_bytes: 102400
+#      max_lines: 500
+#      force_close_files: true
+#      multiline:
+#        pattern:^20
+#        negate: true
+#        match: after
+
+    - input_type: log
+      paths:
+        - /var/log/messages*
+#      document_type: messages
+#      fields:
+#        log_type: messages
+      fields_under_root: true
+      max_bytes: 102400
+      max_lines: 500
+      force_close_files: true
+
+    - input_type: log
+      paths:
+        - /var/log/secure*
+#      document_type: secure
+#      fields:
+#        log_type: secure-messages
+
+    - input_type: log
+      paths:
+        - /var/log/dmesg*
+#      document_type: dmesg
+#      fields:
+#        log_type: dmesg
+
+    - input_type: log
+      paths:
+        - /var/log/lastlog
+#      document_type: lastlog
+#      fields:
+#        log_type: lastlog
+
+    - input_type: log
+      paths:
+        - /var/log/cron*
+#      document_type: cron-log
+#      fields:
+#        log_type: cron-log
+
+
+output:
+  kafka:
+    hosts: [{{kf_url}}]
+    topic: "message-logs"
+    worker: 5
+    compression: gzip
+    require_acks: 1
+    template:
+      name: "filebeat"
+      path: "filebeat.template.json"
+      overwrite: false
+
+shipper:
+
+logging:
+  files:
+    path: /var/log/filebeat
+    name: filebeat.log
+    keepfiles: 7
+    rotateeverybytes: 10485760

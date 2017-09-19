@@ -1,0 +1,7 @@
+---
+# handlers file for zookeeper
+- name: restart zookeeper
+  shell: /opt/zookeeper/bin/zkServer.sh  restart
+#  service:
+#    name: zookeeperd
+#    state: restarted

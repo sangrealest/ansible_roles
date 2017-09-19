@@ -1,0 +1,51 @@
+---
+- name: check /opt/kafka
+  stat:
+    path: /opt/kafka
+  register: kafkadir
+
+- name: extract kafka file
+  unarchive:
+    src: kafka_{{kafka_version}}.tgz
+    dest: /opt/
+    owner: root
+    group: root
+  when: kafkadir.stat.exists == false
+
+- name: link to /opt/kafka
+  file:
+    src: /opt/kafka_{{kafka_version}}
+    dest: /opt/kafka
+    state: link
+  when: kafkadir.stat.exists == false
+
+- name: overwrite the start script so the Java Opts can be changed
+  lineinfile:
+    dest: /opt/kafka/bin/kafka-server-start.sh
+    regexp: "^export KAFKA_HEAP_OPTS="
+    line: "export KAFKA_HEAP_OPTS=\"{{kafka_heap_opts}}\""
+
+- name: create log_dir
+  file:
+    path: "{{kafka_log_dir}}"
+    state: directory
+    mode: 0755
+
+- name: create server.properties
+  template:
+    src: server.properties.j2
+    dest: "/opt/kafka/config/server.properties"
+
+- name: copy kafka init script to target
+  copy:
+    src: kafka
+    dest: /etc/init.d/kafka
+    mode: 0755
+
+- name: start kafka
+  shell: /opt/kafka/bin/kafka-server-start.sh -daemon /opt/kafka/config/server.properties
+
+#- name: create kafka topic
+##  shell: ". /etc/profile; /opt/kafka/bin/kafka-topics.sh --create --zookeeper #{{zookeeper_ip}}:{{zookeeper_port}} --replication-factor 1 --partitions 10 --topic cib-logs"
+##  delegate_to: "{{inventory_hostname}}"
+##  run_once: true

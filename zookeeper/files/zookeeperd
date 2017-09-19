@@ -1,0 +1,39 @@
+#!/bin/sh
+
+ZOOKEEPER_PATH=/opt/zookeeper
+start() {
+    if [ -f $ZOOKEEPER_PATH/bin/zkServer.sh ]; then
+        echo -n "Starting Zookeeper\n"
+        /bin/su - zookeeper -s /bin/bash -c "$ZOOKEEPER_PATH/bin/zkServer.sh start"
+    fi
+}
+
+stop() {
+    if [ -f $ZOOKEEPER_PATH/bin/zkServer.sh ]; then
+        echo -n "Stopping Zookeeper\n"
+        /bin/su - zookeeper -s /bin/bash -c "$ZOOKEEPER_PATH/bin/zkServer.sh stop"
+    fi
+}
+
+restart() {
+    if [ -f $ZOOKEEPER_PATH/bin/zkServer.sh ]; then
+        echo -n "Restarting Zookeeper\n"
+        /bin/su - zookeeper -s /bin/bash -c "$ZOOKEEPER_PATH/bin/zkServer.sh restart"
+    fi
+}
+
+case "$1" in
+    'start')
+        start
+        ;;
+    'stop')
+        stop
+        ;;
+    'restart')
+        restart
+        ;;
+    *)
+        echo "Usage: $0 { start | stop | restart}"
+esac
+exit 0
+

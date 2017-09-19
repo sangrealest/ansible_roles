@@ -1,0 +1,4 @@
+---
+# defaults file for filebeat
+elk_kf: 'elk_kafka'
+kf_url: '"11.11.106.180:9092", "11.11.106.181:9092", "11.11.106.182:9092"'

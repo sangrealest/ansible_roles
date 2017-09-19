@@ -1,0 +1,25 @@
+{% for host in groups[kafka_cluster_hosts] %}
+{% if host == inventory_hostname %}
+broker.id={{loop.index}}
+{% endif %}
+{% endfor %}
+port={{kafka_port}}
+host.name={{inventory_hostname}}
+group.id=cpdc
+num.network.threads={{kafka_num_network_threads}}
+num.io.threads={{kafka_num_io_threads}}
+socket.send.buffer.bytes={{kafka_socket_send_buffer_bytes}}
+socket.receive.buffer.bytes={{kafka_socket_receive_buffer_bytes}}
+socket.request.max.bytes={{kafka_socket_request_max_bytes}}
+log.dirs={{kafka_log_dir}}
+num.partitions={{kafka_num_partitions}}
+log.flush.interval.messages={{kafka_log_flush_interval_messages}}
+log.flush.interval.ms={{kafka_log_flush_interval_ms}}
+log.retention.hours={{kafka_log_retention_hours}}
+log.retention.bytes={{kafka_log_retention_bytes}}
+log.segment.bytes={{kafka_log_segment_bytes}}
+log.retention.check.interval.ms=60000
+log.cleaner.enable=false
+delete.topic.enable=true
+zookeeper.connection.timeout.ms={{zookeeper_connection_timeout_ms}}
+zookeeper.connect={% for host in groups[zookeeper_cluster_hosts] %}{{host |regex_replace('(\d+(.\d+){3})','\\1:2181')}}{% if not loop.last %},{% endif %}{% endfor %}

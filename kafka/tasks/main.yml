@@ -1,0 +1,9 @@
+---
+#- name: set /etc/hosts
+#  lineinfile:
+#    dest: /etc/hosts
+#    line: "{{item}} {{ hostvars[item].ansible_hostname}}"
+#    state: present
+#  with_items: "groups['{{kafka_cluster_hosts}}']"
+
+- include: kafka.yml

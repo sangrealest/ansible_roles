@@ -1,0 +1,5 @@
+{% for host in groups[elk_zk] %}
+{% if host == inventory_hostname %}
+{{ loop.index }}
+{% endif %}
+{% endfor %}
