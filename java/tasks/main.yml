@@ -1,0 +1,46 @@
+---
+- name: remove java package
+  yum:
+    name: java
+    state: absent
+
+- name: install jdk 8u121 package
+  yum:
+    name: "{{ jdk_version }}"
+    state: present
+#- name: check /opt/jdk directory
+#  stat:
+#    path: /opt/jdk
+#  register: jdk
+#
+#- name: extract java file
+#  unarchive:
+#    src: jdk-8u121-linux-x64.tar.gz
+#    dest: /opt/
+#    owner: root
+#    group: root
+#  when: jdk.stat.exists == False
+#
+#- name: link to /opt/jdk
+#  file:
+#    src: /opt/jdk1.8.0_121
+#    dest: /opt/jdk
+#    state: link
+#  when: jdk.stat.exists == False
+
+- name: set JAVA_HOME
+  lineinfile:
+    dest: /etc/profile
+    line: "export JAVA_HOME=/usr/java/default"
+
+- name: set CLASSPATH
+  lineinfile:
+    dest: /etc/profile
+    line: "export CLASSPATH=$JAVA_HOME/lib"
+    state: present
+
+- name: set JAVA_HOME_PATH
+  lineinfile:
+    dest: /etc/profile
+    line: "export PATH=$JAVA_HOME/bin:$PATH"
+    state: present
