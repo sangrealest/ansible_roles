@@ -40,12 +40,7 @@ cobbler_distros:
     arch: x86_64
     kickstart_file_name: rhel7_virtual.cfg
 
-
 ```
-
-
-
-
 
 The example of inventory file is:
 
@@ -53,9 +48,6 @@ The example of inventory file is:
 [lab]
 lab01
 ```
-
-
-
 
 Example Playbook
 ----------------
@@ -69,7 +61,6 @@ Example Playbook
     - ansible-cobbler
 
 ```
-
 
 License
 -------
