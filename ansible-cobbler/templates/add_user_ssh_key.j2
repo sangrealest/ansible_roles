@@ -1,0 +1,6 @@
+# Install ops's public key 
+useradd ops -u 777 -G wheel -p '$6$ECdzh2L3$8PLt2CAXsNz5jcui4Oouuxn2V76.K8MweESXo/qTtn8dozfHddfC4ZPDT9HmwiX6VO2K6FFYBzxBaARsBhfWu0'
+cd /home/ops
+sudo -u ops mkdir --mode=700 .ssh
+[ ! -f /home/ops/.ssh/authorized_keys ] && echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEuSlANzhG0zkNIm2CxTN7GuaKYobnmrwbDloXgawMRqYGirx0DEiTyHRVGp/0PWLP+ACMUbvoWEL5g8tv8WeLkIgebwbI27EAdHSuR4UvZiui8AvRSkmltk9bP6KUNtosBoa6tJdtO1NfUxCTxZLsRClRK/l7mgR8zYBQpil7gWCUiSWHeqaW8yhH0CyZeK4iJ7X/RfBIT7BXz44Fb1UoJEtJ5LoQ4vkzkWLyBWE49GjBN1NJJ2rsNs+EHfK0UgLph9kXGhhm7sAw02/AvzJjE3mSPn1lBg/iUvwKMJ87fUsm+awB0O7qoEJ0tSNMQGGSjBD+MYytDegx/W8WM5Gz root@Shanker.redhat.com' | sudo -u ops -H bash -c 'cat >> /home/ops/.ssh/authorized_keys'
+chmod 600 /home/ops/.ssh/authorized_keys

@@ -1,0 +1,11 @@
+---
+# tasks file for cobbler
+
+- name: The play only run in RHEL7 system
+  fail: msg="Your Operating System {{ ansible_distribution }}-{{ ansible_distribution_major_version }} not supported"
+  when: 
+    - ansible_distribution != "RedHat" 
+    - ansible_distribution_major_version != "7"
+
+- name: install cobbler on RedHat
+  include: rhel7.yml

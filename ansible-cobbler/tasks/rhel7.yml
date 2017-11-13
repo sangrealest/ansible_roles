@@ -1,0 +1,202 @@
+---
+
+# Prepare the environment 
+
+- name: Disable selinux
+#not working well with Ansible 2.4
+#  selinux: 
+#    state: disabled
+  lineinfile:
+    path: /etc/selinux/config 
+    regexp: "SELINUX="
+    line: SELINUX=disabled
+  tags:
+    - disable_selinux
+    - pretask
+
+- name: Stop and disable firewalld
+  service: 
+    name: firewalld 
+    state: stopped 
+    enabled: no
+  tags:
+    - disable_frewalld
+    - pretask
+
+- name: Install epel repo
+  yum: 
+    name: "{{ epel_url }}" 
+    state: present
+  tags:
+    - install_epel
+    - pretask
+
+#- name: copy rhel base repo
+#  copy:
+#    src: rhel-base.repo
+#    dest: /etc/yum.repos.d/
+
+- name: Install cobbler packages
+  yum: 
+    name: "{{ item }}" 
+    state: present
+  with_items:
+    - "{{ cobbler_packages }}"
+  tags:
+    - install_cobbler
+
+- name: Generate cobbler crypted password
+  shell: openssl passwd -1 {{ cobbler_password }}
+  register: cobbler_password_crypted
+  tags:
+    - generate_cobbler_crypted_pwd
+
+- name: Copy settings.j2 to remote server
+  template: 
+    src: settings.j2 
+    dest: /etc/cobbler/settings 
+    backup: yes
+  notify: 
+    - restart cobblerd
+    - sync cobbler
+  tags:
+    - setup_cobbler
+
+- name: Copy dhcp.template.j2 to remote server
+  template: 
+    src: dhcp.template.j2 
+    dest: /etc/cobbler/dhcp.template 
+    backup: yes
+  notify:
+    - sync cobbler
+  tags:
+    - setup_cobbler
+
+- name: Copy tftp service to remote server
+  copy: 
+    src: tftp
+    dest: /etc/xinetd.d/tftp 
+    mode: 0644
+    owner: root
+  notify:
+    - sync cobbler
+  tags:
+    - setup_cobbler
+
+
+- name: Generate a snippets to add normal user ops
+  template: 
+    src: add_user_ssh_key.j2
+    dest: /var/lib/cobbler/snippets/add_user_ssh_key
+  tags:
+    - setup_cobbler
+#
+#- name: post_install_network_config_ignore_interface snippnet
+#  template: src=var/lib/cobbler/snippets/post_install_network_config_ignore_interface.j2
+#            dest=/var/lib/cobbler/snippets/post_install_network_config_ignore_interface
+#            backup=yes
+#
+#- name: /var/lib/cobbler/kickstarts/centos7-customized-sda
+#  template: src=var/lib/cobbler/kickstarts/centos7-customized-sda.j2
+#            dest=/var/lib/cobbler/kickstarts/centos7-customized-sda
+#            backup=yes
+#
+#- name: /var/lib/cobbler/kickstarts/centos7-customized-vda
+#  template: src=var/lib/cobbler/kickstarts/centos7-customized-vda.j2
+#            dest=/var/lib/cobbler/kickstarts/centos7-customized-vda
+#            backup=yes
+
+- name: Generate rhel7_virtual.cfg
+  template: 
+    src: rhel7_virtual.j2
+    dest: /var/lib/cobbler/kickstarts/rhel7_virtual.cfg
+    backup: yes
+  tags:
+    - setup_cobbler
+
+
+- name: start and enable service
+  service: 
+    name: "{{ item }}" 
+    state: started 
+    enabled: yes
+  with_items:
+    - rsyncd
+    - tftp
+    - httpd
+    - cobblerd
+  tags:
+    - setup_cobbler
+
+- name: Copy cobbler loaders to remote server
+  copy: 
+    src: loaders
+    dest: /var/lib/cobbler/
+    owner: root
+    mode: 0755
+  tags:
+    - setup_cobbler
+
+# import distribution
+
+- name: Download iso images
+  copy:
+   src: "{{ iso_name }}"
+   dest: /var/iso_images/
+  tags:
+    - copy_iso
+    - import_distro
+    - setup_cobbler
+
+- name: mount iso to system
+  mount: 
+    src: /var/iso_images/{{ iso_name }}
+    path: /mnt/{{ item.distro_name }}
+    fstype: iso9660
+    opts: ro
+    state: mounted
+  with_items: "{{ cobbler_distros }}"
+  tags:
+    - import_distro
+    - setup_cobbler
+
+- name: Import distro to cobbler
+  shell: cobbler import --name={{ item.distro_name }}
+         --arch={{ item.arch }}
+         --path=/mnt/{{ item.distro_name }}
+         --kickstart=/var/lib/cobbler/kickstarts/{{ item.kickstart_file_name }}
+  when: cobbler_distros is defined
+  with_items: "{{ cobbler_distros | default([])}}"
+  ignore_errors: true
+  tags:
+    - import_distro
+    - setup_cobbler
+
+- name: unmount iso images
+  mount:
+    path: /mnt/{{ item.distro_name }}
+    state: absent
+  with_items: "{{ cobbler_distros }}"
+  tags:
+    - setup_cobbler
+
+- name: Customize pxedefault info
+  copy:
+    src: pxedefault.template
+    dest: /etc/cobbler/pxe/pxedefault.template
+  tags:
+    - setup_cobbler
+
+- name: Modify cobbler default web admin password
+  template:
+    src: users.digest.j2
+    dest: /etc/cobbler/users.digest
+    mode: 0644
+  tags:
+    - setup_cobbler
+
+- name: cobbler sync
+  shell: cobbler sync
+  tags:
+    - cobbler_sync
+    - setup_cobbler

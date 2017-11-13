@@ -1,0 +1,15 @@
+---
+# handlers file for cobbler
+
+- name: restart cobblerd
+  service: 
+    name: cobblerd 
+    state: restarted
+
+- name: restart httpd
+  service: 
+    name: httpd 
+    state: restarted
+
+- name: sync cobbler
+  shell: cobbler sync
