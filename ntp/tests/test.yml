@@ -1,0 +1,5 @@
+---
+- hosts: all
+  name: test ntp role
+  roles:
+  - ntp
