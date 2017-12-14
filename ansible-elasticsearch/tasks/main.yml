@@ -17,12 +17,13 @@
 
 - block:
   - name: configure memory_lock in /etc/sysconfig/elasticsearch
-    lineinfile: dest=/etc/sysconfig/elasticsearch regexp='^#MAX_LOCKED_MEMORY' line='MAX_LOCKED_MEMORY=unlimited'
-    notify: restart elasticsearch
-
-  - name: configure max open files in /etc/sysconfig/elasticsearch
-    lineinfile: dest=/etc/sysconfig/elasticsearch regexp='^#MAX_OPEN_FILES' line='MAX_OPEN_FILES=65536'
-    notify: restart elasticsearch
+    lineinfile: 
+      dest: /etc/sysconfig/elasticsearch 
+      regexp: "{{ item.rex }}"
+      line: "{{ item.line }}"
+    with_items:
+      - { rex: '^#MAX_LOCKED_MEMORY', line: 'MAX_LOCKED_MEMORY=unlimited' }
+      - { rex: '^#MAX_OPEN_FILES', line: 'MAX_OPENFILES=65535' }
 
   - name: configure memory_lock in /usr/lib/systemd/system/elasticsearch
     lineinfile: dest=/usr/lib/systemd/system/elasticsearch.service regexp='^#LimitMEMLOCK' line='LimitMEMLOCK=infinity'
