@@ -1,0 +1,14 @@
+---
+# defaults file for ansible-chrony
+chrony_server_list:
+  - 0.cn.pool.ntp.org
+  - 1.cn.pool.ntp.org
+  - 2.cn.pool.ntp.org
+  - 3.cn.pool.ntp.org
+
+allow_hosts:
+  - "10/8"
+  - "192.168/16"
+  - "172.16/12"
+
+log_dir: /var/log/chrony
