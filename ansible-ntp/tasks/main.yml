@@ -5,7 +5,9 @@
   when: ansible_distribution_major_version != "6"
   
 - name: Install Packages 
-  yum: name=htp state=latest
+  yum: 
+    name: ntp 
+    state: latest
 
 - name: Configure  timezone
   file:
@@ -16,6 +18,11 @@
   when: ntp_timezone is defined
 
 - name: Configure  ntp.conf
-  template: src=ntp.conf.j2 dest=/etc/ntp.conf group=0644 owner=root group=root
+  template: 
+    src: ntp.conf.j2 
+    dest: /etc/ntp.conf 
+    mode: 0644 
+    owner: root 
+    group: root
   notify: 
   - restart ntp
