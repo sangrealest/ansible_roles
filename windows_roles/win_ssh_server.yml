@@ -1,0 +1,3 @@
+- hosts: windows
+  roles:
+    - win_ssh_config_
