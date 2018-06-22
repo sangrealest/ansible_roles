@@ -1,0 +1,102 @@
+---
+#Ulimit config 
+- name: Add core, nofile, noproc to limit
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: "{{ item }} "
+  with_items:
+    - "*  soft core {{ ulimit_soft_core }}"
+    - "*  hard core {{ ulimit_hard_core }}"
+    - "*  soft nofile {{ ulimit_soft_nofile }}"
+    - "*  hard nofile {{ ulimit_hard_nofile }}"
+    - "*  soft nproc {{ ulimit_soft_nproc }}"
+    - "*  hard nproc {{ ulimit_hard_nproc }}"
+- name: Disable 20-nrpc
+  lineinfile:
+    path: /etc/security/limits.d/20-nproc.conf
+    regexp: '(\*          soft    nproc     4096)'
+    line: '#\1'
+
+# Login.defs
+- name: Change login.defs
+  lineinfile:
+    line: "{{ item }}"
+    path: /etc/login.defs
+    state: present
+  with_items:
+    - "LOG_UNKFAIL_ENAB        yes"
+    - "LOGIN_RETRIES           6"
+    - "LASTLOG_ENAB           yes"
+    
+# SSH Config
+- name: use port 22 to sshd_config
+  lineinfile: 
+    line: "Port 22" 
+    dest: /etc/ssh/sshd_config 
+    state: present  
+    insertafter: ".*Port 22"
+  notify:
+  - restart ssh
+
+- name: insert port 30066 to sshd_config
+  lineinfile: 
+    line: "Port 30066" 
+    dest: /etc/ssh/sshd_config 
+    state: present  
+    insertafter: ".*Port 22"
+  notify:
+  - restart ssh
+
+- name: add 30066 to sshd_config
+  lineinfile: 
+    line: "#Port 30066 is only used for Ansible" 
+    dest: /etc/ssh/sshd_config 
+    state: present 
+    insertafter: ".*Port 22"
+  notify:
+  - restart ssh
+- name: make usre .ssh directory is present
+  file: 
+    path: /root/.ssh 
+    state: directory 
+    mode: 0600
+  
+- name: add pub keys
+  lineinfile: 
+    line: "{{ item }}" 
+    dest: /root/.ssh/authorized_keys 
+    state: present 
+    create: true 
+    mode: 0600
+  with_items:
+  - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDUMjMIZc3vxbUpBG6vjB7cvJSOWgPCxvfE0p1DRYxo3yujJSClTLPcLkcJo0Xm0i7umH0n++xxMBCzv74/eRGV6kcaFCrrphzpBZ3c3NuXJLdlWqLmjekwCqEbWMpx/i1ZD4jg9kjzJoYWoHpOqAiVFB1CQyCwI8u00uLnc83    BVjF2E5fkh/OSxeu6yTijGq9B7Ew+UUQot3n8UO6zNsICCzRbHOjXJj/DIJX+NFiU//ucSoFC5sULiuNtqhj9qhgwX/eMhYYXIUBMjGqQLOb6aIPXzrsBEMhufwp0QuRH2+Ps51ipFdJ1cj91sZ8QOAkHYjujFs/UiNmwiX1kBbiP root@shanker"
+  tags: pubkey
+
+#Sysctl
+- name: Config sysctl
+  lineinfile:
+    line: "{{ item }}"
+    path: /etc/sysctl.conf
+    state: present
+  with_items:
+    - "kernel.core_pattern = /var/core.%p-%e-%u-%s"
+    - "fs.file-max = 65535"
+    - "net.core.somaxconn = 32768"
+    - "vm.overcommit_memory_ratio = 70"
+
+#rc.local
+- name: Get execute on rc.local
+  command: chmod +x /etc/rc.d/rc.local
+  
+#Set umask to 022
+- name: Set profile umask to 022
+  replace:
+    path: /etc/profile
+    regexp: '(.*umask )002$'
+    replace: '\1 022'
+
+- name: Comment login.defs umask 
+  lineinfile:
+      path: /etc/login.defs 
+      regexp: '(UMASK.*077)' 
+      line: '#\1'

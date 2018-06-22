@@ -1,0 +1,145 @@
+---
+#Set Selinux 
+- name: Check selinux status
+  shell: getenforce
+  register: selinux_status
+
+- block:
+  - name: Set selinux_status info
+    selinux: 
+      state: disabled
+    notify:
+    - debug_reboot_msg
+    tags:
+      - selinux
+  - name: setenforce 0
+    command: setenforce 0
+    ignore_errors: true
+    tags:
+      - selinux
+  
+  when: 
+  - selinux_status != "Disabled"
+
+# Disable and mask Firewall
+- name: Disable firewalld#Disable not used services 
+  service:
+      name: firewalld 
+      enabled: no 
+      state: stopped
+- name: Mask firewall
+  systemd:
+    name: firewalld
+    masked: yes
+- name: Disable not used services
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  ignore_errors: true
+  with_items:
+    - "{{ service_disabled }}"
+
+
+#Important file permissions
+- name: Make sure /tmp and /var/tmp foler 1777                                                                                                                                                                     
+  file:                                                                                                                                                                                                            
+    path: "{{ item }}"                                                                                                                                                                                             
+    owner: root                                                                                                                                                                                                    
+    group: root                                                                                                                                                                                                    
+    mode: 1777                                                                                                                                                                                                     
+  with_items:                                                                                                                                                                                                      
+    - /tmp                                                                                                                                                                                                         
+    - /var/tmp                                                                                                                                                                                                     
+                                                                                                                                                                                                                   
+- name: Make sure /etc/passwd /etc/group /etc/hosts /etc/sysctl.conf 644                                                                                                                                           
+  file:                                                                                                                                                                                                            
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  ignore_errors: true
+  with_items:
+    - /etc/passwd
+    - /etc/group
+    - /etc/hosts
+    - /etc/sysctl.conf
+
+- name: Make sure /etc/shadow  /etc/gshadow 000
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0000
+  with_items:
+    - /etc/shadow
+    - /etc/gshadow
+
+- name: Make sure /etc/shadow  /etc/gshadow 000
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0000
+  with_items:
+    - /etc/shadow
+    - /etc/gshadow
+
+- name: Make sure /etc/crontab /etc/securetty 400
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0400
+  with_items:
+    - /etc/crontab
+    - /etc/securetty
+
+- name: Make sure /boot/grub2/grub.cfg 600
+  file:
+    path: /boot/grub2/grub.cfg
+    owner: root
+    group: root
+    mode: 0600
+  ignore_errors: true
+
+- name: Make sure /etc/login.defs 640
+  file:
+    path: /etc/login.defs
+    owner: root
+    group: root
+    mode: 0640
+
+# Password related alignments
+- name: Make password standard
+  shell: sed -i "s/password    requisite     pam_pwquality.so.*/password    required      pam_cracklib.so try_first_pass retry=6 minlen=8 minclass=3 enforce_for_root/g" /etc/pam.d/system-auth-ac
+  tags: pam
+
+- name: Change pam-pwquality to cracklib
+  shell: sed -i 's/pam_pwquality.so/pam_cracklib.so/' /etc/pam.d/password-auth-ac
+  tags: pam
+
+
+#Kdump config 
+- name: Set kdump
+  copy: 
+    src: kdump.conf
+    dest: /etc/kdump.conf
+  tags: kdump
+- name: Make sure kdump is enabled onboot
+  service:
+    name: kdump
+    state: started
+    enabled: true
+  ignore_errors: true
+  tags: kdump
+
+- name: Disable Alt+Ctrl+Del 
+  systemd:
+    name: ctrl-alt-del.target
+    masked: yes
+  tags: ctrl_alt_del
+
+- name: Set default runlevel
+  command: systemctl set-default multi-user.target
+  tags: runlevel

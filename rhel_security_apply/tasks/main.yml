@@ -1,0 +1,17 @@
+---
+#System baseline config, including yum, runlevel, chrony
+- name: Set system baseline
+  import_tasks: rhel7_system_base.yml
+  tags: rhel7_system_base
+
+#System security config, including selinux, file permissions and password policy. 
+- name: Set system security
+  import_tasks: rhel7_security.yml 
+  tags:
+    - rhel7_security
+
+#System profile config, including ulimit
+- name: Set system profile
+  import_tasks: rhel7_profile.yml
+  tags:
+    - rhel7_profile

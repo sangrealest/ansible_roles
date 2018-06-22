@@ -1,0 +1,75 @@
+---
+
+#Set yum repo
+
+- name: Set yum repo
+  template:
+    src: rhel-source.repo.j2
+    dest: /etc/yum.repos.d/rhel-source.repo
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - yum
+
+#Set Chronyd service
+- name: Set chronyd service for rhel7
+  copy:
+      dest: /etc/chrony.conf 
+      src: chrony.conf 
+  notify:
+    - restart chronyd
+  tags:
+    - chronyd
+#Start chronyd service
+- name: Start chrony service
+  systemd:
+      name: chronyd 
+      enabled: yes 
+      state: started 
+  tags:
+  - chronyd
+
+#Set History config 
+- name: Set history command format
+  lineinfile:
+    path: /etc/profile
+    line: "{{ item }}"
+  with_items: 
+    - 'export HISTTIMEFORMAT="%F %T [`whoami`]"'
+    - 'export PROMPT_COMMAND="history -a"'
+    - 'export HISTCONTROL="ignoredups"'
+    - 'HISTSIZE={{ hist_size }}'
+    - 'HISTFILESIZE={{ hist_file_size }}'
+    - 'export TMOUT={{ ssh_tmout }}'
+
+#- name: Set history command format
+#  lineinfile:
+#    path: /etc/profile
+#    line: 'export HISTTIMEFORMAT="%F %T [`whoami`]"'
+#
+#- name: Set history instant record
+#  lineinfile:
+#    path: /etc/profile
+#    line: 'export PROMPT_COMMAND="history -a"'
+#
+#- name: Set  ignore duplicated history 
+#  lineinfile:
+#    path: /etc/profile
+#    line: 'export HISTCONTROL="ignoredups"'
+#
+#- name: Set history size
+#  lineinfile:
+#    path: /etc/profile
+#    line: 'HISTSIZE={{ hist_size }}'
+#  
+#- name: Set history file size
+#  lineinfile:
+#    path: /etc/profile
+#    line: 'HISTFILESIZE={{ hist_file_size }}' 
+#
+#- name: Set timeout
+#  lineinfile:
+#    path: /etc/profile
+#    line: 'export TMOUT={{ ssh_tmout }}'
+

@@ -1,0 +1,12 @@
+---
+- name: restart ssh
+  service:
+    name: sshd
+    state: restarted
+- name: debug_reboot_msg
+  debug:
+    msg: "Selinux just chaned to disabled, please reboot your system."
+- name: restart chronyd
+  service:
+    name: chronyd
+    state: restarted

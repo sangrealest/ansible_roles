@@ -1,0 +1,36 @@
+---
+tmp_path: /var/www/html/healthcheck/
+ulimit_soft_core: 102400
+ulimit_hard_core: 102400
+ulimit_soft_nofile: 65535
+ulimit_hard_nofile: 65535
+ulimit_soft_nproc: 65535
+ulimit_hard_nproc: 65535
+hist_size: 1000
+hist_file_size: 5000
+ssh_tmout: 600
+yum_server_ip: 22.11.22.11
+service_disabled:
+    - acpid
+    - autofs
+    - avahi-daemon
+    - bluetooth
+    - cups
+    - cups-browsed
+    - dnsmas
+    - firstboot
+    - nfs-server
+    - nfs-config
+    - rpcbind
+    - rpc-statd
+    - nfs-idmapd
+    - nfs-mountd
+    - Sendmail
+    - postfix
+    - smb
+    - squid
+    - iscsid
+    - libvirtd
+#network_interface: "{{ ansible_default_ipv4.interface }}"
+#physical_network_dev: bond0
+#virtual_network_dev: eth0
