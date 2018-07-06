@@ -1,0 +1,148 @@
+---
+- import_tasks: createlvm.yml
+  tags:
+   - lv
+   - ignore
+
+- name: configure nofile
+  pam_limits:
+    domain: "*"
+    limit_type: "-"
+    limit_item: nofile
+    value: 1048576
+  tags:
+    - prepare
+
+- name: configure vm.overcommit_memory
+  sysctl:
+    name: vm.overcommit_memory
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes
+  ignore_errors: true
+  tags:
+    - prepare    
+
+- name: install zlib, ruby, ruby-gems
+  yum:
+    name: zlib, zlib-devel, ruby, rubygems, gcc, gcc-c++
+    state: present
+  tags:
+    - ignore
+    - prepare
+
+- name: Copy file to remote node
+  copy:
+    src: "{{ item }}"
+    dest: /tmp/
+  with_items:
+  - "{{ redis_cluster_packages }}"
+  tags:
+    - prepare
+
+- name: unarchive redis ruby packages
+  unarchive:
+    src: "/tmp/{{ redis_pkgname }}"
+    dest: "{{ redis_path }}"
+    list_files: yes
+    remote_src: yes
+  tags:
+    - install
+
+#- name: mv unarchived dir to /usr/local
+#  shell: mv /tmp/{{ item.dirname }} {{ item.path }}
+#  with_items: 
+#    - { dirname: "{{redis_dirname}}", path: "{{redis_path}}" }
+#  tags: ignore
+
+- name: stat /usr/local/bin/redis-server
+  stat: path=/usr/local/bin/redis-server
+  ignore_errors: true
+  register: redisinfo
+
+- block:
+  - name: make distclean
+    shell: make distclean
+    args:
+      chdir: "{{ redis_path }}/{{ redis_dirname }}"
+
+  - name: make redis
+    make:
+      chdir: "{{ redis_path }}/{{ redis_dirname }}"
+    register: redis_make
+    notify: restart redis
+  
+  - name: make install redis
+    make:
+      chdir: "{{ redis_path }}/{{ redis_dirname }}"
+      target: install
+    when: redis_make|succeeded
+    notify: restart redis
+  when: redisinfo.stat.exists == false
+  tags:
+    - install
+
+- name: gem install redis
+  shell: gem install -l {{ redis_gem }}
+  args:
+    chdir: /tmp
+  tags:
+    - ignore
+    - install
+
+- name: copy redis conf to remote node
+  template: 
+    src: redis.conf.j2 
+    dest: "{{ redis_path }}/{{ redis_dirname }}/redis.conf"
+  notify: restart redis
+  tags:
+    - ignore
+    - configuration
+
+- name: copy redis service to remote node in RHEL6
+  template: 
+    src: redis.j2 
+    dest: /etc/init.d/redis
+    mode: 0755
+  when: ansible_distribution_major_version == '6'
+  tags:
+    - configuration  
+
+- block:
+  - name: create rhel7 redis systemd service
+    template:
+      src: redis.service.j2
+      dest: "{{ item }}"
+    with_items:
+    - /etc/systemd/system/redis.service
+    - /usr/lib/systemd/system/redis.service
+    notify: restart redis
+  
+  - name: systemd daemon reload
+    shell: systemctl daemon-reload
+  
+  - name: create rhel7 redis systemd shutdown script
+    template:
+      src: redis-shutdown.j2
+      dest: /usr/libexec/redis-shutdown
+      mode: 0755
+  when: ansible_distribution_major_version == '7'
+  tags:
+    - configuration  
+
+- name: start redis
+  service: 
+    name: redis
+    enabled: true
+    state: started
+
+#- name: start redis-server
+#  service: name=redis-server state=started
+
+#- name: create redis cluster
+#  shell: "{{ redis_path }}/src/redis-trib.rb create --replicas 1 {{ redis_cluster }}"
+#  delegate_to: "{{ inventory_hostname}}"
+#  run_once: true
+
+

@@ -1,0 +1,55 @@
+---
+# create lvm tasks
+- name: create mountpoint
+  file:
+    path: "{{ redis_path }}"
+    state: directory
+
+- name: get state of mount point
+  stat:
+    path: "{{ redis_path }}"
+  register: pathinfo
+  ignore_errors: true
+
+- block:
+  - name: install lvm2 packages
+    yum:
+      name: lvm2
+      state: present
+
+#  - name: filesystem | create volume group
+#    lvg:
+#      pvs: "{{ devname }}"
+#      vg: "{{ vgname }}"
+#    tags: createvolume
+
+  - name: filesystem | create logical volume
+    lvol:
+      vg: "{{ vgname }}"
+      lv: "{{ lvname }}"
+      size: "{{ lvsize }}"
+      state: present
+    tags: createlvm
+  
+  - name: filesystem | create file system
+    filesystem:
+      fstype: "{{ fs }}" 
+      dev: /dev/{{ vgname }}/{{ lvname }}
+  
+  - name: filesystem | mount dir 
+    mount:
+      src: /dev/{{ vgname }}/{{ lvname }}
+      path: "{{ redis_path }}" 
+      state: mounted
+      fstype: "{{ fs }}" 
+
+#  - name: filesystem | add in fstab file
+#    lineinfile:
+#      path: /etc/fstab
+#      insertafter: EOF
+#      line: "/dev/{{ vg_name }}/{{ lvname }}                    {{ redis_path }}                   {{ redis_path }}    defaults,acl        0 0"
+#      state: present
+
+  when: pathinfo.stat.exists == true
+
+

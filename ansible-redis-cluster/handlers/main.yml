@@ -1,0 +1,11 @@
+---
+# handlers file for nginx
+#- name: restart redis
+#  shell: "pkill redis-server && nohup /usr/local/bin/redis-server {{ redis_path }}/redis.conf "
+
+- name: restart redis
+#  shell: "pkill redis-server && /usr/local/bin/redis-server {{ redis_path }}/{{ redis_dirname }}/redis.conf"
+  service:
+    name: redis
+    enabled: true
+    state: restarted

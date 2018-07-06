@@ -1,0 +1,29 @@
+---
+# defaults file for redis-cluster
+#
+#devname: /dev/sdc
+vgname: rootvg
+lvname: lv_redis
+lvsize: 5G
+fs: ext4
+
+redis_pkgname: "redis-{{ redis_version }}.tar.gz"
+redis_gem: "redis-{{ gem_version }}.gem"
+
+redis_cluster_packages:
+ - "{{ redis_pkgname }}"
+ - "{{ redis_gem }}"
+
+unarchive_packages:
+#  - redis-3.2.1.tar.gz
+  - "{{ redis_pkgname }}"
+
+redis_path: "/redis"
+redis_dirname: "redis-{{ redis_version }}"
+
+#redis_path: "/usr/local/redis"
+#
+##redis_compile_parameter: ""
+##ruby_compile_parameter: ""
+#
+
