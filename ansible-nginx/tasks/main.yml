@@ -1,0 +1,62 @@
+---
+- name: Copy file to remote node
+  copy:
+    src: "{{ item }}"
+    dest: /tmp/
+  with_items: "{{ nginx_pkgname }}"
+
+- name: unarchive the package
+  unarchive:
+    copy: no
+    src: /tmp/{{ nginx_pkgname }}
+    dest: /usr/local/src/ 
+    list_files: yes
+
+- name: Install relied package
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ nginx_relied_packages }}"
+
+- name: stat /usr/local/nginx/
+  stat: path=/usr/local/nginx/
+  register: nginxinfo
+
+- block:
+  - name: configure nginx
+    shell: ./configure {{ item }}
+    args:
+      chdir: /usr/local/src/{{ nginx_dirname }}/
+      removes: configure
+      executable: /bin/bash
+    with_items: "{{ nginx_compile_parameter }}"
+    register: confinfo
+    notify: restart nginx
+
+  - name: make nginx
+    make:
+      chdir: /usr/local/src/{{ nginx_dirname }}/
+    when: confinfo|succeeded
+    register: makeinfo
+    notify: restart nginx
+  
+  - name: make install nginx
+    make:
+      chdir: /usr/local/src/{{ nginx_dirname }}/
+      target: install
+    when: makeinfo|succeeded
+    notify: restart nginx
+
+  when: nginxinfo.stat.exists == False
+
+- name: copy config file to remote server
+  template: 
+    src: nginx.conf.j2 
+    dest: "{{ nginx_path }}/conf/nginx.conf"
+
+- name: Start nginx service
+  shell: ./nginx -c {{ nginx_path }}/conf/nginx.conf
+  args:
+    chdir: "{{ nginx_path }}/sbin"
+    removes: "{{ nginx_path }}/conf/nginx.conf"
+    executable: /bin/bash
