@@ -1,0 +1,29 @@
+---
+- name: Install Apache
+  yum:
+    name: httpd
+    state: latest
+
+- name: Copy apache modules
+  copy:
+    src: "{{ item }}"
+    dest: "{{ apache_path }}/modules/"
+  with_items: "{{ apache_modules }}"
+  notify: restart apache service
+
+- name: Copy httpd config file to remote server
+  template:
+    src: httpd.conf.j2
+    dest: "{{ apache_path }}/conf/"
+  notify: restart apache service
+
+- name: Copy cluster config file to remote server
+  template:
+    src: mod_cluster.conf.j2
+    dest: "{{ apache_path }}/conf/"
+  notify: restart apache service
+- name: start httpd
+  service: 
+    name: httpd
+    state: restarted
+    enabled: yes
